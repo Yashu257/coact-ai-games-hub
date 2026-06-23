@@ -1,0 +1,254 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>MASTER CHESS</title>
+    <link rel="stylesheet" href="css/reset.css" type="text/css" />
+    <link rel="stylesheet" href="css/main.css" type="text/css" />
+    <link rel="stylesheet" href="css/ios_fullscreen.css" type="text/css" />
+    <link rel="stylesheet" href="css/orientation_utils.css" type="text/css" />
+    <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="js/createjs.min.js"></script>
+    <script type="text/javascript" src="js/howler.min.js"></script>
+    <script type="text/javascript" src="js/screenfull.js"></script>
+    <script type="text/javascript" src="js/platform.js"></script>
+    <script type="text/javascript" src="js/ios_fullscreen.js"></script>
+    <script type="text/javascript" src="js/CAreYouSurePanel.js"></script>
+    <script type="text/javascript" src="js/TreeModel.js"></script>
+    <script type="text/javascript" src="js/CTreeDecision.js"></script>
+    <script type="text/javascript" src="js/ctl_utils.js"></script>
+    <script type="text/javascript" src="js/sprite_lib.js"></script>
+    <script type="text/javascript" src="js/settings.js"></script>
+    <script type="text/javascript" src="js/CLang.js"></script>
+    <script type="text/javascript" src="js/CPreloader.js"></script>
+    <script type="text/javascript" src="js/CCreditsPanel.js"></script>
+    <script type="text/javascript" src="js/CMain.js"></script>
+    <script type="text/javascript" src="js/CTextButton.js"></script>
+    <script type="text/javascript" src="js/CToggle.js"></script>
+    <script type="text/javascript" src="js/CGfxButton.js"></script>
+    <script type="text/javascript" src="js/CMessage.js"></script>
+    <script type="text/javascript" src="js/CMenu.js"></script>
+    <script type="text/javascript" src="js/CModeMenu.js"></script>
+    <script type="text/javascript" src="js/CGame.js"></script>
+    <script type="text/javascript" src="js/CInterface.js"></script>
+    <script type="text/javascript" src="js/CInfoTurn.js"></script>
+    <script type="text/javascript" src="js/CThinking.js"></script>
+    <script type="text/javascript" src="js/CEndPanel.js"></script>
+    <script type="text/javascript" src="js/CCell.js"></script>
+    <script type="text/javascript" src="js/CPiece.js"></script>
+    <script type="text/javascript" src="js/CMovesController.js"></script>
+    <script type="text/javascript" src="js/CBoardStateController.js"></script>
+    <script type="text/javascript" src="js/CCopiedCell.js"></script>
+    <script type="text/javascript" src="js/CPromoPanel.js"></script>
+    <script type="text/javascript" src="js/CAI.js"></script>
+    <script type="text/javascript" src="js/CMovesControllerFaster.js"></script>
+
+    <script type="text/javascript" src="js/CGUIExpandible.js"></script>
+    <script type="text/javascript" src="js/CCTLText.js"></script>
+    <script type="text/javascript" src="js/sprintf.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script type="text/javascript" src="js/handTracking.js"></script>
+    <script type="text/javascript" src="js/gestureController.js"></script>
+</head>
+
+<body ondragstart="return false;" ondrop="return false;">
+    <div style="
+        position: fixed;
+        background-color: transparent;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+      "></div>
+    <script>
+        // ── COACT Hub score bridge ─────────────────────────────────────────
+        async function _recordScore(gameId, score) {
+            try {
+                const empName = localStorage.getItem('ai_hub_employee');
+                if (!empName) return;
+
+                const response = await fetch('http://localhost:3001/api/scores', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ employeeName: empName, gameId, score })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('[Hub] Saved to backend:', data);
+                } else {
+                    console.warn('[Hub] Backend save failed');
+                }
+            } catch (e) {
+                console.warn('[Hub] Backend score bridge error:', e);
+            }
+        }
+
+        function _recordLocalScore(gameId, score) {
+            try {
+                var empName = localStorage.getItem('ai_hub_employee');
+                if (!empName) return;
+                var empId = empName.trim().toLowerCase().replace(/\s+/g, '-');
+                var store = {};
+                try { store = JSON.parse(localStorage.getItem('ai_hub_scores') || '{}'); } catch(e) {}
+                if (!store[empId]) store[empId] = { name: empName, games: {} };
+                store[empId].name = empName;
+                if (!store[empId].games[gameId]) store[empId].games[gameId] = { best: 0, attempts: 0, history: [], totalScore: 0 };
+                var g = store[empId].games[gameId];
+                g.attempts++;
+                g.history.unshift(score);
+                if (g.history.length > 10) g.history.pop();
+                g.totalScore += score;
+                if (score > g.best) g.best = score;
+                localStorage.setItem('ai_hub_scores', JSON.stringify(store));
+                console.log('[Hub] Saved', score, 'pts for', empName, '→', gameId);
+                _recordScore(gameId, score);
+            } catch(e) { console.warn('[Hub] Score bridge failed:', e.message); }
+        }
+        // ──────────────────────────────────────────────────────────────────
+
+        $(document).ready(function() {
+            var oMain = new CMain({
+                show_score: true, //SET IF YOU WANT PLAY WITH A SCORE
+                    start_score: 5000, //START SCORE. MORE TIME YOU USE TO FINISH A MATCH, LESS SCORE YOU GET
+                    score_decrease_per_second: 10, //SCORE DECREASED PER SECOND
+
+                    check_orientation: true, //SET TO FALSE IF YOU DON'T WANT TO SHOW ORIENTATION ALERT ON MOBILE DEVICES
+                    fullscreen: true, //SET THIS TO FALSE IF YOU DON'T WANT TO SHOW FULLSCREEN BUTTON
+                    audio_enable_on_startup: true, //ENABLE/DISABLE AUDIO WHEN GAME STARTS
+                });
+
+                $(oMain).on('start_session', function(evt) {
+                    if (getParamValue('ctl-arcade') === 'true') {
+                        parent.__ctlArcadeStartSession();
+                    }
+                    //...ADD YOUR CODE HERE EVENTUALLY
+                });
+
+                $(oMain).on('end_session', function(evt) {
+                    if (getParamValue('ctl-arcade') === 'true') {
+                        parent.__ctlArcadeEndSession();
+                    }
+                    //...ADD YOUR CODE HERE EVENTUALLY
+                });
+
+                // $(oMain).on("save_score", function(evt, iWinner, iBlackTime, iWhiteTime, s_iGameType, iWhiteScore) {
+                //     // iWinner:
+                //     // -1 IS DRAW
+                //     //0 WHITE WINS
+                //     //1 BLACK WINS
+
+                //     if (getParamValue('ctl-arcade') === "true" && s_iGameType === 1 && iWinner === "white") {
+                //         parent.__ctlArcadeSaveScore({
+                //             score: iWhiteScore,
+                //             szMode: s_iGameType + ""
+                //         });
+                //     }
+
+                // });
+                $(oMain).on(
+                    'save_score',
+                    async function(evt, iWinner, iBlackTime, iWhiteTime, s_iGameType, iWhiteScore) {
+                        // iWinner:
+                        // -1 IS DRAW
+                        //  0 WHITE WINS
+                        //  1 BLACK WINS
+                        console.log(evt);
+                        // Save to hub leaderboard (iWhiteScore = player's score)
+                        _recordLocalScore('chess', iWhiteScore || 0);
+
+                        const userId = localStorage.getItem('userId');
+                        const token = localStorage.getItem('authToken');
+
+                        if (userId) {
+                            fetch('https://gameserver.coact.live/apis/games/chessscore', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        Authorization: `Bearer ${token}`, // Include token for authorization
+                                    },
+                                    body: JSON.stringify({
+                                        userId: userId,
+                                        winner: iWinner,
+                                        blackTime: iBlackTime,
+                                        whiteTime: iWhiteTime,
+                                        gameType: s_iGameType,
+                                        whiteScore: iWhiteScore,
+                                    }),
+                                })
+                                .then((response) => {
+                                    if (!response.ok) {
+                                        throw new Error('Failed to save score');
+                                    }
+                                    return response.json();
+                                })
+                                .then((data) => {
+                                    console.log('Score saved:', data);
+                                })
+                                .catch((error) => {
+                                    console.error('Error saving score:', error);
+                                });
+                        }
+                    }
+                );
+
+                $(oMain).on('share_event', function(evt, iScore, s_iGameType, iWinner) {
+                    if (getParamValue('ctl-arcade') === 'true' && s_iGameType === 1 && iWinner === 0) {
+                        parent.__ctlArcadeShareEvent({
+                            img: TEXT_SHARE_IMAGE,
+                            title: TEXT_SHARE_TITLE,
+                            msg: TEXT_SHARE_MSG1 + iScore + TEXT_SHARE_MSG2,
+                            msg_share: TEXT_SHARE_SHARE1 + iScore + TEXT_SHARE_SHARE1,
+                        });
+                    }
+                    //...ADD YOUR CODE HERE EVENTUALLY
+                });
+
+                $(oMain).on('show_interlevel_ad', function(evt) {
+                    if (getParamValue('ctl-arcade') === 'true') {
+                        parent.__ctlArcadeShowInterlevelAD();
+                    }
+                    //...ADD YOUR CODE HERE EVENTUALLY
+                });
+
+                if (isIOS()) {
+                    setTimeout(function() {
+                        sizeHandler();
+                    }, 200);
+                } else {
+                    sizeHandler();
+                }
+
+                if (window.GestureChess && typeof window.GestureChess.init === "function") {
+                    window.GestureChess.init();
+                }
+            });
+    </script>
+
+    <div class="check-fonts">
+        <p class="check-font-1">arialrounded</p>
+    </div>
+
+    <canvas id="canvas" class="ani_hack" width="1280" height="1920"> </canvas>
+    <div data-orientation="portrait" class="orientation-msg-container">
+        <p class="orientation-msg-text">Please rotate your device</p>
+    </div>
+    <div id="block_game" style="
+        position: fixed;
+        background-color: transparent;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        display: none;
+      "></div>
+</body>
+
+</html>

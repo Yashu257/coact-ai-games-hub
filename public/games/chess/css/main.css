@@ -1,0 +1,206 @@
+root { 
+    display: block;
+}
+
+body{
+    background-color: #000000;
+    background-repeat: repeat-x;
+    background-position: top;
+    background-image: url(../sprites/bg_tile.jpg);    
+}
+
+*, *:before, *:after {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+     
+input, input:before, input:after {
+    -webkit-user-select: initial;
+    -khtml-user-select: initial;
+    -moz-user-select: initial;
+    -ms-user-select: initial;
+    user-select: initial;
+}
+
+::selection { background: transparent;color:inherit; }
+::-moz-selection { background: transparent;color:inherit; }
+
+#canvas{
+    
+    position: fixed;
+}
+
+canvas {
+	-ms-touch-action: none;
+}
+
+.ani_hack{
+    -webkit-perspective: 1000;
+    -webkit-backface-visibility: hidden;
+    
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent; /* mobile webkit */
+}
+
+/***************FONTS*******************/
+
+@font-face {
+  font-family: 'ComicSansMS-Bold';
+  src: url('ComicSansMS-Bold.eot?#iefix') format('embedded-opentype'),  url('ComicSansMS-Bold.woff') format('woff'), url('ComicSansMS-Bold.ttf')  format('truetype'), url('ComicSansMS-Bold.svg#ComicSansMS-Bold') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+    font-family: 'arialrounded';
+    src: url('arial_rounded_mt_bold_bold-webfont.eot');
+    src: url('arial_rounded_mt_bold_bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('arial_rounded_mt_bold_bold-webfont.woff2') format('woff2'),
+         url('arial_rounded_mt_bold_bold-webfont.woff') format('woff'),
+         url('arial_rounded_mt_bold_bold-webfont.ttf') format('truetype'),
+         url('arial_rounded_mt_bold_bold-webfont.svg#arialrounded') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+.check-fonts{
+                position: fixed;
+                opacity:0;
+}
+
+.check-font-1{
+        font-family: 'arialrounded';
+}
+
+.hand-debug-root{
+    position: fixed;
+    right: 0;
+    left: auto;
+    top: 0;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.hand-debug-panel{
+    pointer-events: auto;
+    width: 220px;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    margin: 10px;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.2;
+    backdrop-filter: blur(6px);
+}
+
+.hand-debug-status{
+    font-weight: 600;
+}
+
+.hand-debug-metrics{
+    opacity: 0.9;
+    margin-top: 6px;
+    word-break: break-word;
+}
+
+.hand-debug-start{
+    margin-top: 8px;
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+}
+
+.hand-debug-start:disabled{
+    opacity: 0.55;
+}
+
+.hand-debug-video{
+    display: none;
+}
+
+.hand-debug-canvas{
+    display: none;
+}
+
+.gesture-cursor{
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    z-index: 9998;
+    pointer-events: none;
+    transform: translate(-100px,-100px);
+}
+
+.gesture-cursor-dot{
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    width: 4px;
+    height: 4px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 50%;
+}
+
+.gesture-cursor-ring{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.55);
+}
+
+.gesture-cursor--disabled{
+    opacity: 0.25;
+}
+
+.gesture-cursor--tracking{
+    opacity: 0.9;
+}
+
+.gesture-cursor--pinch .gesture-cursor-ring{
+    border-color: rgba(255, 215, 0, 0.9);
+}
+
+.gesture-cursor--drag .gesture-cursor-ring{
+    border-color: rgba(0, 255, 160, 0.9);
+}
+
+.gesture-debug{
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    z-index: 9999;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    pointer-events: none;
+    max-width: 60vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

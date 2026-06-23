@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Face Puzzle</title>
+    <link rel="stylesheet" href="./style.css" />
+    <style>
+      html, html[data-theme="dark"], html[data-theme="light"] {
+        --bg: #0b1020 !important;
+        --text: rgba(255,255,255,0.92) !important;
+        --muted: rgba(255,255,255,0.65) !important;
+      }
+      select, button, .control, .label, .value {
+        color: rgba(255,255,255,0.92) !important;
+      }
+      select option {
+        background-color: #0b1020 !important;
+        color: rgba(255,255,255,0.92) !important;
+      }
+      select {
+        background-color: rgba(255,255,255,0.05) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="brandText">
+            <div class="title">Face Puzzle</div>
+            <div class="subtitle">Solve with mouse or hand gestures</div>
+          </div>
+        </div>
+        <div class="topActions">
+          <select id="difficultySelect" class="control" aria-label="Difficulty">
+            <option value="3">3×3 (Easy)</option>
+            <option value="4" selected>4×4 (Normal)</option>
+            <option value="5">5×5 (Hard)</option>
+            <option value="6">6×6 (Expert)</option>
+          </select>
+          <button id="newGameBtn" class="control primary" type="button">New Game</button>
+          <button id="shuffleBtn" class="control" type="button">Shuffle</button>
+          <button id="hintBtn" class="control" type="button">Hint</button>
+          <button id="toggleThemeBtn" class="control" type="button" aria-pressed="false">Theme</button>
+          <button id="toggleSoundBtn" class="control" type="button" aria-pressed="true">Sound</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="game">
+          <div class="boardHeader">
+            <div class="stats">
+              <div class="stat">
+                <div class="label">Time</div>
+                <div class="value" id="timeLabel">00:00</div>
+              </div>
+              <div class="stat">
+                <div class="label">Moves</div>
+                <div class="value" id="movesLabel">0</div>
+              </div>
+              <div class="stat">
+                <div class="label">Score</div>
+                <div class="value" id="scoreLabel">0</div>
+              </div>
+              <div class="stat">
+                <div class="label">Progress</div>
+                <div class="value"><span id="progressLabel">0</span>%</div>
+              </div>
+            </div>
+            <div class="progressBar" aria-label="Puzzle completion">
+              <div class="progressFill" id="progressFill"></div>
+            </div>
+          </div>
+
+          <div class="boardWrap">
+            <div id="board" class="board" aria-label="Puzzle board"></div>
+            <div class="boardOverlayHint" id="boardHintOverlay" aria-hidden="true"></div>
+            <canvas id="confettiCanvas" class="confetti" aria-hidden="true"></canvas>
+          </div>
+        </section>
+
+        <aside class="side">
+          <div class="card">
+            <div class="cardHeader">
+              <div class="cardTitle">Reference</div>
+              <div class="cardActions">
+                <select id="faceSelect" class="control small" aria-label="Face gallery">
+                  <option value="gallery:1" selected>Gallery 1</option>
+                  <option value="gallery:2">Gallery 2</option>
+                  <option value="gallery:3">Gallery 3</option>
+                  <option value="gallery:4">Gallery 4</option>
+                  <option value="gallery:5">Gallery 5</option>
+                  <option value="gallery:6">Gallery 6</option>
+                </select>
+                <button id="selfieBtn" class="control small primary" type="button">Take Selfie</button>
+                <button id="randomFaceBtn" class="control small" type="button">Random Face</button>
+                <button id="uploadBtn" class="control small" type="button">Upload</button>
+                <input id="fileInput" class="hidden" type="file" accept="image/*" />
+              </div>
+            </div>
+            <div class="previewRow">
+              <canvas id="previewCanvas" class="preview" width="220" height="220"></canvas>
+              <div class="faceMeta">
+                <div class="metaRow"><span class="metaKey">Image</span><span class="metaVal" id="imageLabel">Random</span></div>
+                <div class="metaRow"><span class="metaKey">Best</span><span class="metaVal" id="bestLabel">—</span></div>
+                <div class="metaRow"><span class="metaKey">Mode</span><span class="metaVal" id="inputModeLabel">Mouse + Hand</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardHeader">
+              <div class="cardTitle">Hand Tracking</div>
+              <div class="cardActions">
+                <button id="toggleHandBtn" class="control small primary" type="button" aria-pressed="true">Enabled</button>
+                <button id="toggleOverlayBtn" class="control small" type="button" aria-pressed="true">Overlay</button>
+              </div>
+            </div>
+            <div class="handPanel">
+              <div class="handStage">
+                <video id="camVideo" class="camVideo" autoplay playsinline muted></video>
+                <canvas id="camOverlay" class="camOverlay"></canvas>
+                <div id="handStatus" class="handStatus">Initializing…</div>
+              </div>
+              <div class="handTips">
+                <div class="tip"><span class="pill">Cursor</span> Index fingertip</div>
+                <div class="tip"><span class="pill">Pick</span> Pinch (thumb + index)</div>
+                <div class="tip"><span class="pill">Drag</span> Hold pinch</div>
+                <div class="tip"><span class="pill">Drop</span> Release pinch</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardHeader">
+              <div class="cardTitle">High Scores</div>
+              <div class="cardActions">
+                <button id="resetScoresBtn" class="control small" type="button">Reset</button>
+              </div>
+            </div>
+            <ol class="leaderboard" id="leaderboard"></ol>
+          </div>
+        </aside>
+      </main>
+
+      <div class="modal hidden" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="modalCard">
+          <div class="modalHeader">
+            <div class="modalTitle" id="winTitle">Puzzle Completed</div>
+            <button class="control small" id="closeWinBtn" type="button">Close</button>
+          </div>
+          <div class="modalBody">
+            <div class="summaryGrid">
+              <div class="summaryItem">
+                <div class="label">Time</div>
+                <div class="value" id="winTime">00:00</div>
+              </div>
+              <div class="summaryItem">
+                <div class="label">Moves</div>
+                <div class="value" id="winMoves">0</div>
+              </div>
+              <div class="summaryItem">
+                <div class="label">Score</div>
+                <div class="value" id="winScore">0</div>
+              </div>
+              <div class="summaryItem">
+                <div class="label">Difficulty</div>
+                <div class="value" id="winDifficulty">4×4</div>
+              </div>
+            </div>
+            <div class="modalActions">
+              <button id="playAgainBtn" class="control primary" type="button">Play Again</button>
+              <button id="newFaceBtn" class="control" type="button">New Face</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="virtualCursor" class="cursor" aria-hidden="true"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>
